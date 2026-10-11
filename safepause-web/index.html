@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#124f58">
+  <title>安心停一下 SafePause</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brandmark">✓</span><div><strong>安心停一下</strong><small>SAFEPAUSE · 家庭共核</small></div></div>
+    <nav aria-label="页面导航">
+      <a href="#check" data-view="check">对话核验</a><a href="#device" data-view="device">设备调用</a><a href="#cases" data-view="cases">案例查询</a><a href="#practice" data-view="practice">虚拟通话</a><a href="#feedback" data-view="feedback">反诈反馈</a>
+    </nav>
+    <div class="head-actions"><button id="largeToggle" type="button" aria-pressed="false">大字模式</button><span class="connection" id="connection">设备未连接</span></div>
+  </header>
+
+  <main class="layout">
+    <section class="page-intro" id="check">
+      <div><p class="eyebrow">先暂停 · 再核实 · 后处置</p><h1>这条信息，先一起核对。</h1><p>不要转账、发验证码或点陌生链接。把你想核对的这一条内容放进来。</p></div>
+      <div class="status-strip" aria-label="处理进度"><span id="flowPlanned" class="active">1 已选择</span><span id="flowConfirm">2 待确认</span><span id="flowExecuted">3 已调用</span><span id="flowVerified">4 已核验</span></div>
+    </section>
+
+    <div class="columns">
+      <div class="primary">
+        <section class="panel input-panel" aria-labelledby="inputTitle">
+          <div class="section-head"><div><span class="section-no">01</span><h2 id="inputTitle">和安心停一下聊聊</h2></div><span class="muted">一次只核对一件事</span></div>
+          <div class="voice-companion" aria-label="语音对话助手"><div class="assistant-avatar" id="assistantAvatar" aria-hidden="true"><span class="avatar-face">安</span><i class="avatar-wave"></i></div><div class="voice-copy"><b>安心小助手</b><span id="voiceState">可先用本机语音聊天；连接国产 AI 后回答更丰富</span><small>点一次开始说话；识别后自动回复并朗读。每轮由您启动。</small></div><button id="voiceStart" class="voice-start" type="button">开始语音聊天</button></div>
+          <div class="assistant-actions"><button id="voiceReplay" type="button">听助手说话</button><button id="voiceRecordFallback" type="button" hidden>改用录音</button><span id="voiceDiagnostic" class="tiny" role="status">连接您部署的 SafePause 服务并勾选授权后，即可语音问答。</span></div>
+          <label>语音识别方式<select id="voiceMode"><option value="record">受控语音转写（建议；音频发送到百炼）</option><option value="browser">手机或浏览器语音识别（识别文字送国产 AI）</option></select></label>
+          <div class="service-banner" id="serviceStatus" role="status">ⓘ 当前为本地规则模式；语音转写和智能体服务尚未连接。</div>
+          <label>安心小助手使用的国产 AI<select id="aiProviderSelect" aria-describedby="providerNote"><option value="">尚未连接 AI 服务</option></select></label>
+          <p id="providerNote" class="tiny">未连接模型时仍可使用本机语音和 SafePause 本地规则；连接后才会把本次文字交给所选国产模型。豆包 App 和元宝 App 不能直接充当网页接口；API 密钥仅保存在服务端。</p>
+          <label class="check cloud-consent"><input type="checkbox" id="cloudConsent"><span id="cloudConsentText">我同意本次会话中主动发送的文字经受控国产 AI 处理；不要输入验证码、密码。</span> 取消勾选后仍可使用本地规则。</label>
+          <label class="check cloud-consent"><input type="checkbox" id="voiceCloudConsent"><span id="voiceCloudConsentText">如果选择“受控语音转写”，我同意本次会话录音发送给语音识别服务，再把识别文字发送给国产 AI。可随时取消。</span></label>
+          <div id="agentProposal" class="note" hidden><p id="agentProposalText"></p><button id="reviewProposal" type="button">核对设备操作建议</button></div>
+          <div id="chatMessages" class="chat-messages" role="log" aria-live="polite"><div class="chat-bubble assistant">您好。刚才是收到短信，还是接到电话？您也可以告诉我“我有点害怕”“联系家人”或“暂停五分钟”。</div></div>
+          <div class="segmented" role="tablist" aria-label="输入类型"><button class="selected" data-input="sms" role="tab" aria-selected="true">短信</button><button data-input="call" role="tab" aria-selected="false">来电</button><button data-input="image" role="tab" aria-selected="false">截图</button></div>
+          <label for="eventText" id="inputLabel">可疑消息的内容</label>
+          <div class="chat-compose"><textarea id="eventText" rows="3" placeholder="例如：我收到短信说医保要停用，怎么办？"></textarea><button class="primary-btn" id="analyzeBtn" type="button">发送</button></div>
+          <div class="voice-controls"><button id="recordStart" type="button">开始录音</button><button id="recordStop" type="button" disabled>结束录音</button><label for="audioFile">选取录音文件</label><input id="audioFile" type="file" accept="audio/*"></div>
+          <div id="audioTray" class="audio-tray" hidden><audio id="audioPreview" controls preload="metadata"></audio><label class="check cloud-consent"><input type="checkbox" id="audioConsent"><span id="audioConsentText">我同意仅本次所选录音经受控语音服务转写；先试听，避免包含敏感信息。</span></label><div class="action-row"><button id="audioTranscribe" type="button">转成文字（需语音服务）</button><button id="audioToChat" type="button">加入本次对话</button><button id="audioShare" type="button">用系统分享录音</button><button id="audioDownload" type="button">下载录音</button><button id="audioClear" type="button">删除录音</button></div></div>
+          <p id="audioStatus" class="tiny" aria-live="polite">录音仅在本页保存。转写需要受控语音服务；无法转写时可补充文字。</p>
+          <details class="more-evidence"><summary>补充截图或已造成损失</summary><div class="evidence-picker"><label for="evidenceImage">选择本机截图</label><input id="evidenceImage" type="file" accept="image/*"><div id="imageStatus" class="tiny" aria-live="polite">图片只在本页预览，不上传或自动识别。</div><img id="evidencePreview" alt="已选择的截图，供人工核对文字" hidden></div><label class="check"><input id="lossCheck" type="checkbox"> 我已经转账或泄露验证码</label></details>
+        </section>
+
+        <section class="panel result-panel" aria-labelledby="resultTitle">
+          <div class="section-head"><div><span class="section-no">02</span><h2 id="resultTitle">核验结果</h2></div><span id="riskBadge" class="badge neutral">等待分析</span></div>
+          <div id="riskActionCard" class="risk-action-card" hidden role="status"><svg class="risk-icon" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 7 60 55H4Z" fill="currentColor"/><path d="M32 23v15" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="46" r="3" fill="white"/></svg><div><strong id="riskActionTitle"></strong><p id="riskActionText"></p><small>风险提示，不是官方诈骗认定。</small></div></div>
+          <div id="urgent" class="urgent" hidden>先停止继续操作，尽快联系银行官方客服或拨打 110。不要再向对方提供信息。</div>
+          <p id="riskSummary" class="result-lead">完成上方分析后，这里会显示风险信号与下一步。</p>
+          <div class="ledger">
+            <div><h3>手机或用户提供的信息</h3><ul id="observedList"><li>暂无</li></ul></div>
+            <div><h3>已独立核验</h3><ul id="verifiedList"><li>暂无</li></ul></div>
+            <div><h3>风险信号</h3><ul id="signalList"><li>暂无</li></ul></div>
+            <div><h3>仍需核实</h3><ul id="unknownList"><li>暂无</li></ul></div>
+          </div>
+          <div class="action-row"><button id="timerBtn" type="button">开启 5 分钟暂停</button><button id="summaryBtn" type="button">生成脱敏摘要</button></div>
+          <p id="timerStatus" class="tiny"></p>
+        </section>
+
+        <section class="panel family-panel" aria-labelledby="familyTitle">
+          <div class="section-head"><div><span class="section-no">03</span><h2 id="familyTitle">家庭共核</h2></div><span class="muted">联系原通讯录中的可信家人</span></div>
+          <p>请从你原来保存的联系人中核对号码。不要使用可疑消息提供的新号码。</p>
+          <div class="form-grid"><label>称呼<input id="familyName" autocomplete="off" placeholder="例如：女儿"></label><label>原通讯录号码<input id="familyPhone" inputmode="tel" autocomplete="off" placeholder="由你核对后填写"></label></div>
+          <label>发送给家人的内容<textarea id="familyMessage" rows="3">我收到一条可疑信息，请用原来的号码联系我，一起核实。</textarea></label>
+          <div class="action-row"><button id="familySms" type="button">短信核验</button><button id="familyCall" type="button">电话核验</button></div>
+          <div id="familyStatus" class="note">尚未联系家人。</div>
+          <div class="response-row"><label>家人回复内容<input id="familyReply" placeholder="收到回复后由你填写，或用设备工具读取选中会话"></label><button id="recordReply" type="button">记录家庭初核</button></div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="panel device-panel" id="device" aria-labelledby="deviceTitle">
+          <div class="section-head"><div><span class="section-no">04</span><h2 id="deviceTitle">设备调用</h2></div><span id="deviceBadge" class="badge neutral">待探测</span></div>
+          <p>真实调用取决于本机或手机上的 MCP 服务、系统权限和本次授权。每项能力以当前探测结果为准。</p>
+          <div id="gatewayWrap" hidden><label>受控设备网关地址<input id="gatewayUrl" type="url" autocomplete="off" placeholder="https://你的设备网关域名"></label><p class="tiny">此处填写 SafePause 网关地址，不是静态网页网址，也不是手机号码。网关须连接目标设备上已授权的服务；可更换网关连接其他设备，不限定手机品牌。请勿填写陌生人提供的网址或密钥。</p></div>
+          <details class="connection-guide"><summary>如何连接不同品牌的设备？</summary><ol><li>在目标设备上安装或启用有系统操作能力的服务，按系统要求授权。</li><li>通过适配器将该服务接入 SafePause 网关；每个目标设备使用独立受控连接。</li><li>填写该设备的 HTTPS 网关地址与访问密钥，探测其实际工具。网关须允许当前网页来源。</li></ol><p>网页运行在哪台手机上，不代表工具就会操作这台手机；调用的是网关实际连接的目标设备，发送或拨号前必须核对。</p><p>Android 需要实际设备服务；鸿蒙需要对应系统版本的服务或适配器；iPhone 若无可用接口则使用本人确认的系统拨号/短信入口。当前尚未完成所有系统的原生适配。</p><p>导入 Skill 只提供操作规则；实际运行它还需要模型、智能体运行环境和设备工具。当前静态托管没有运行这些服务。</p></details>
+          <div id="deviceInfo" class="note">正在检查连接…</div>
+          <div class="service-banner warning">⚠ 选择手机类型只显示适配建议，不会获得短信权限或完成配对。系统动作需要该手机已授权的设备服务。</div>
+          <div class="action-row"><button id="refreshTools" type="button">重新探测</button><button id="revokeBtn" type="button">撤销本页授权</button></div>
+          <label id="keyWrap" hidden>访问密钥<input id="accessKey" type="password" autocomplete="off" placeholder="仅保存在当前页面内存"></label>
+          <div class="capability-grid" id="capabilityGrid"></div>
+          <h3>调用已发现的工具</h3>
+          <label>设备功能<select id="toolSelect"><option value="">先探测设备</option></select></label>
+          <div id="toolFields" class="tool-fields"></div>
+          <label>本次用途<input id="toolPurpose" placeholder="例如：只查看刚才那条可疑短信"></label>
+          <button id="prepareBtn" class="primary-btn wide" type="button" disabled>预览本次调用</button>
+          <div id="toolResult" class="tool-result" aria-live="polite">没有设备调用记录。</div>
+          <p class="tiny">调用工具成功只表示设备接受了调用，不表示短信已送达、电话已接通或家人身份已确认。</p>
+        </section>
+
+        <section class="panel fallback-panel"><div class="section-head"><div><span class="section-no">05</span><h2>跨手机适配</h2></div></div><label for="deviceRoute">当前设备类型</label><select id="deviceRoute"><option value="auto">自动建议</option><option value="android">Android 或其他安卓品牌</option><option value="harmony">鸿蒙手机</option><option value="ios">iPhone</option><option value="other">其他智能手机 / 未知系统</option><option value="feature">功能机 / 无浏览器</option></select><div id="routeAdvice" class="note" aria-live="polite"></div><p class="tiny">所有品牌都能采用人工核验路径；系统短信、通话记录和通话音频的自动读取取决于系统权限及实际设备服务。MCP 本身不授予这些权限。</p></section>
+      </aside>
+    </div>
+
+    <section class="wide-section" id="cases"><div class="section-head"><div><span class="section-no">06</span><h2>案例查询</h2></div><span class="muted">演示案例，不能作为真实案件认定</span></div><div class="case-tools"><input id="caseQuery" placeholder="搜索医保、亲属、退款、验证码等"><select id="caseFilter"><option value="all">全部风险等级</option><option value="R3">高风险 R3</option><option value="R2">中风险 R2</option><option value="R1">谨慎 R1</option><option value="R0">未见明显风险 R0</option></select></div><div id="caseGrid" class="case-grid"></div></section>
+
+    <section class="wide-section practice" id="practice"><div class="section-head"><div><span class="section-no">07</span><h2>虚拟通话练习</h2></div><span class="muted">模拟对话，不接入真实电话</span></div><div class="practice-layout"><div class="practice-phone"><div class="call-top"><span>模拟来电</span><b id="practiceCaller">未知号码</b><small id="practiceTime">00:00</small></div><div id="practiceLines" class="practice-lines" aria-live="polite">选择情境后开始练习。</div><div class="call-actions"><button id="speakBtn" type="button" disabled>朗读对方的话</button><button id="endPractice" type="button" disabled>结束练习</button></div></div><div class="practice-controls"><label>练习情境<select id="practiceScenario"><option value="family">冒充亲属急需转账</option><option value="bank">冒充银行安全账户</option><option value="medical">冒充医院催缴费用</option></select></label><button class="primary-btn" id="startPractice" type="button">开始虚拟通话</button><p id="practicePrompt">练习重点：先挂断，再用原通讯录或官方公开号码核实。</p><div id="practiceChoices" class="choice-list"></div><p class="tiny">语音朗读使用浏览器本地功能，是否调用系统语音引擎取决于手机和浏览器；不会读取真实通话音频。</p></div></div></section>
+
+    <section class="wide-section feedback" id="feedback"><div class="section-head"><div><span class="section-no">08</span><h2>反诈反馈与复盘</h2></div><span class="badge neutral" id="feedbackStatus">未分享</span></div><div class="feedback-layout"><div><p>先在本机查看脱敏摘要。是否向公安机关提交、提交哪些原始证据，由你通过核实过的官方渠道自行决定。</p><textarea id="feedbackDraft" rows="7" readonly placeholder="完成风险分析后生成摘要"></textarea><div class="action-row"><button id="copySummary" type="button">复制摘要</button><button id="reportCall" type="button">打开 96110 拨号盘</button></div></div><div class="feedback-steps"><h3>反馈状态</h3><ol><li class="current">本机生成草稿</li><li>用户自行提交</li><li>渠道回执</li><li>机构反馈</li></ol><p>当前没有地区警局合作接口。页面不会代报案，也不会生成虚构回执。</p><p class="tiny">收到真实回执后可在线下保管；未经正式合作与单独授权，不会把数据送去训练模型。</p></div></div></section>
+  </main>
+
+  <dialog id="confirmDialog"><form method="dialog"><h2>确认设备调用</h2><p>请核对本次用途、工具和所有参数。执行后可能无法撤回。</p><div id="confirmDetails"></div><div class="dialog-actions"><button value="cancel">取消</button><button id="confirmExecute" value="confirm" class="primary-btn">确认调用</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
